@@ -14,14 +14,18 @@
 class StreamReassembler {
   private:
     // Your code here -- add private members as necessary.
-    std::string _streams[100] = { "" };
-    // std::vector<pair<size_t, size_t>> _idx;
-    size_t _assembled = 0;
-    size_t _unassembled_size = 0;
-    size_t _maxIdx = -1;
-
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
+
+    // https://github.com/GuanchengFu/CS144/blob/master/libsponge/stream_reassembler.hh
+    std::vector<char> _unassembled_chars;
+    std::vector<bool> _exist_data;
+    size_t _unassembled_size = 0;
+    size_t _maxIdx = 0;
+    size_t _end_idx = 0;
+    bool _eof = false;
+    void assemble_data();
+
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
