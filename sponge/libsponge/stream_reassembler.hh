@@ -4,10 +4,9 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
-#include <string>
-
-#include <vector>
 #include <iostream>
+#include <string>
+#include <vector>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -25,7 +24,6 @@ class StreamReassembler {
     size_t _end_idx = 0;
     bool _eof = false;
     void assemble_data();
-
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.

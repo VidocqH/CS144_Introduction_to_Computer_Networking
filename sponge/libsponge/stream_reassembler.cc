@@ -14,7 +14,6 @@ using namespace std;
 
 StreamReassembler::StreamReassembler(const size_t capacity)
     : _output(capacity), _capacity(capacity), _unassembled_chars(_capacity), _exist_data(_capacity, false) {
-    _assembled = 0;
     _unassembled_size = 0;
 }
 
