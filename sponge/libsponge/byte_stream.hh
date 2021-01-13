@@ -11,7 +11,6 @@
 class ByteStream {
   private:
     // Your code here -- add private members as necessary.
-    // std::deque<char> Data;
     std::string Data = "";
     size_t MemoryCapacity = 0;
     size_t written = 0;
