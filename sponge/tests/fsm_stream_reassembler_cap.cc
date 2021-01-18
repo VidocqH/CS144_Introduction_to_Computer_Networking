@@ -64,6 +64,16 @@ int main() {
         }
 
         {
+            ReassemblerTestHarness test{2};
+            test.execute(SubmitSegment{"bc", 1});
+            test.execute(BytesAssembled(0));
+
+            test.execute(SubmitSegment{"a", 0});
+            test.execute(BytesAssembled(2));
+            test.execute(BytesAvailable("ab"));
+        }
+    
+        {
             ReassemblerTestHarness test{3};
             for (unsigned int i = 0; i < 99997; i += 3) {
                 const string segment = {char(i), char(i + 1), char(i + 2), char(i + 13), char(i + 47), char(i + 9)};
