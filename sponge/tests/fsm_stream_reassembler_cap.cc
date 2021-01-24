@@ -72,7 +72,7 @@ int main() {
             test.execute(BytesAssembled(2));
             test.execute(BytesAvailable("ab"));
         }
-    
+
         {
             ReassemblerTestHarness test{3};
             for (unsigned int i = 0; i < 99997; i += 3) {

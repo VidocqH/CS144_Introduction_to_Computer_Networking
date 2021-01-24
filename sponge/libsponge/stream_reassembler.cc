@@ -12,8 +12,7 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-StreamReassembler::StreamReassembler(const size_t capacity)
-    : _output(capacity), _capacity(capacity) {
+StreamReassembler::StreamReassembler(const size_t capacity) : _output(capacity), _capacity(capacity) {
     _buffer.resize(capacity);
 }
 
