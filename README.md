@@ -6,18 +6,18 @@ Solutions for Stanford-CS144-Fall2020
 [Course Github](https://github.com/cs144/sponge)
 
 ## Finished
-+ Lab 0: Networking Warmup
++ **Lab 0: Networking Warmup**
     1. sponge/apps/webget.cc
     2. sponge/libsponge/byte_stream.cc
     3. sponge/libsponge/byte_stream.hh
-+ Lab 1: Stitching substrings into a byte stream
++ **Lab 1: Stitching substrings into a byte stream**
     1. sponge/libsponge/stream_reassembler.cc
     2. sponge/libsponge/stream_reassembler.hh
-+ Lab 2: the TCP receiver
++ **Lab 2: the TCP receiver**
     1. sponge/libsponge/wrapping_integers.cc
     2. sponge/libsponge/wrapping_integers.hh
     3. sponge/libsponge/tcp_receiver.cc
     4. sponge/libsponge/tcp_receiver.hh
-+ Lab 3: the TCP sender
++ **Lab 3: the TCP sender**
     1. sponge/libsponge/tcp_sender.cc
     2. sponge/libsponge/tcp_sender.hh
