@@ -16,12 +16,23 @@ void get_URL(const string &host, const string &path) {
     sock.write("Connection: close\r\n");
     sock.write("\r\n");
     auto recvd = sock.read();
-    recvd = sock.read();  // HTTP/1.1 200 OK
-    recvd = sock.read();  // Content-type: text/plain
-    while (recvd.length() != 0) {
-        cout << recvd;
-        recvd = sock.read();
+    // HTTP/1.1 200 OK
+    // Content-type: text/plain
+    string res = "";
+    for (auto c:recvd) {
+        if (c != '\n' && c != '\r')
+            res.push_back(c);
     }
+    while (recvd.length() != 0) {
+        recvd = sock.read();
+        if (recvd == "" || recvd == "\n" || recvd == "\r\n" || recvd == "\r")
+            continue;
+        for (auto c:recvd) {
+            if (c != '\n' && c != '\r')
+                res.push_back(c);
+        }
+    }
+    cout<<res.substr(56)<<endl;
     sock.close();
 
     // You will need to connect to the "http" service on
