@@ -14,8 +14,13 @@ class TCPConnection {
     TCPSender _sender{_cfg.send_capacity, _cfg.rt_timeout, _cfg.fixed_isn};
 
     bool _is_passive_close = false;
+    bool _active = false;
+    bool _resend_in_timewait = false;
+    size_t _time_since_last_segment_received = 0;
+    bool _need_send_rst = false;
+    void unclean_shutdown(bool send_rst);
 
-    void segment_sends();
+    void segment_sends(bool send_syn=false);
 
     //! outbound queue of segments that the TCPConnection wants sent
     std::queue<TCPSegment> _segments_out{};

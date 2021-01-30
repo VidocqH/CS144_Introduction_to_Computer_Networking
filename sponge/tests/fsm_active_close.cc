@@ -35,7 +35,6 @@ int main() {
         }
 
         // test #2: start in CLOSING, send ack, time out
-        cout<<"test #2: start in CLOSING, send ack, time out";
         {
             TCPTestHarness test_2 = TCPTestHarness::in_closing(cfg);
 
