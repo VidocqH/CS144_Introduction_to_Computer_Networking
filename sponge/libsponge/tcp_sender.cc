@@ -109,6 +109,7 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
                                                  _segments_in_flight.front().length_in_sequence_space() <=
                                              ackno.raw_value())
         _segments_in_flight.pop();  // Sync segment_in_flight
+    fill_window();
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method

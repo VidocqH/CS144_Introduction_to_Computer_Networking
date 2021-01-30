@@ -19,6 +19,7 @@ class TCPReceiver {
     WrappingInt32 _isn = WrappingInt32{0};
     bool _syn = false;
     bool _fin = false;
+    bool _fin_not_count = true;
 
     //! Our data structure for re-assembling bytes.
     StreamReassembler _reassembler;

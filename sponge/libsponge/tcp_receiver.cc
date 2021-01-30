@@ -29,14 +29,14 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         size_t idx = unwrap(seqno, _isn, checkpoint) - 1;                     // unwrap-1 to get the bytes index
         if (syn_with_data_sign)
             idx = 0;  // The computed index with special case "SYN + data" is a diaster
-        const size_t writtenBeforeWrite =
-            _reassembler.stream_out().bytes_written();  // To compute how much should ack adds
+        // To compute how much should ack adds
+        const size_t writtenBeforeWrite = _reassembler.stream_out().bytes_written();
         _reassembler.push_substring(seg.payload().copy(), idx, header.fin);
-        if (_ackno == seqno ||
-            syn_with_data_sign) {  // Expected bytes arrived, otherwise it's an advanced arrived bytes.
-            const size_t writtenAfterWrite =
-                _reassembler.stream_out().bytes_written();  // To compute how much should ack adds
-            _ackno = WrappingInt32(_ackno.raw_value() + (writtenAfterWrite - writtenBeforeWrite));  // Update ack
+        // Expected bytes arrived, otherwise it's an advanced arrived bytes
+        if (_ackno == seqno || syn_with_data_sign) {
+            // To compute how much should ack add
+            const size_t writtenAfterWrite = _reassembler.stream_out().bytes_written();
+            _ackno = _ackno + (writtenAfterWrite - writtenBeforeWrite);  // Update ack
         }
     }
     // fin sign sets, represents it's the last request
@@ -44,7 +44,10 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
         _fin = true;
     // Finish all the bytes
     if (_fin == true && _reassembler.empty()) {
-        _ackno = WrappingInt32(_ackno.raw_value() + 1ull);  // fin sign occupy one bit, ack+1
+        if (_fin_not_count) {
+            _ackno = _ackno + 1ull;  // fin sign occupy one bit, ack+1
+            _fin_not_count = false;
+        }
         _reassembler.stream_out().end_input();              // End input
     }
 }
