@@ -75,6 +75,7 @@ size_t TCPConnection::write(const string &data) {
 void TCPConnection::tick(const size_t ms_since_last_tick) {
     if (_active == false) // Active return none
         return;
+    auto state = TCPState(_sender, _receiver, _active, _linger_after_streams_finish);
     _time_since_last_segment_received += ms_since_last_tick; // Syn Clock
     _sender.tick(ms_since_last_tick); // Sender Clock
     if (_sender.consecutive_retransmissions() > _cfg.MAX_RETX_ATTEMPTS)
@@ -115,7 +116,8 @@ void TCPConnection::segment_sends(bool send_syn) {
     while (_sender.segments_out().size()) {
         TCPSegment seg;
         // if (state == TCPState::State::LAST_ACK && _time_since_last_segment_received < _cfg.rt_timeout)
-        //     break;
+            // break;
+        // cout<<state.name()<<"--"<<_sender.segments_out().size()<<endl;
         seg = _sender.segments_out().front();
         _sender.segments_out().pop();
         if (_receiver.ackno().has_value()) {

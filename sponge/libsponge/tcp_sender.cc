@@ -115,7 +115,8 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
-    _clock += ms_since_last_tick;
+    if (_segments_in_flight.size())
+        _clock += ms_since_last_tick;
     if (_clock >= _retrans_timeout && _segments_in_flight.size()) {
         _segments_out.push(_segments_in_flight.front());
         _consecutive_retrans++;
