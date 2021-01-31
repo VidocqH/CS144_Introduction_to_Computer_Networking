@@ -105,9 +105,10 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     _seqno = abs_ackno;                                  // Sync seqno
     _retrans_timeout = _initial_retransmission_timeout;  // Reset timeout clock
     _consecutive_retrans = 0;                            // Reset consecutive_retransmissions
-    while (_segments_in_flight.size() && _segments_in_flight.front().header().seqno.raw_value() +
-                                                 _segments_in_flight.front().length_in_sequence_space() <=
-                                             ackno.raw_value())
+    while (_segments_in_flight.size() &&
+        _segments_in_flight.front().header().seqno.raw_value() +
+        _segments_in_flight.front().length_in_sequence_space() <=
+        ackno.raw_value())
         _segments_in_flight.pop();  // Sync segment_in_flight
     fill_window();
 }

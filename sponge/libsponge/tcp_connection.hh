@@ -15,10 +15,11 @@ class TCPConnection {
 
     bool _is_passive_close = false;
     bool _active = true;
+    bool _syn_sended = false;
     size_t _time_since_last_segment_received = 0;
     bool _need_send_rst = false;
     void unclean_shutdown(bool send_rst);
-    void clean_shutdown();
+    bool clean_shutdown();
 
     void segment_sends(bool send_syn=false);
 
