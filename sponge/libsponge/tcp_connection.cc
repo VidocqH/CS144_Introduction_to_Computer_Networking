@@ -27,7 +27,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     _time_since_last_segment_received = 0;
     TCPHeader header = seg.header();
 
-    if (TCPState::state_summary(_sender) == TCPSenderStateSummary::SYN_SENT && header.ack && seg.payload().size())
+    if (in_syn_sent() && header.ack && seg.payload().size())
         return;
 
     bool send_empty = false;
@@ -47,7 +47,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
     if (header.rst) {
-        if (TCPState::state_summary(_sender) == TCPSenderStateSummary::SYN_SENT && header.ack == false)
+        if (in_syn_sent() && header.ack == false)
             return;
         unclean_shutdown(false); // Passive rst
         return;
@@ -135,6 +135,7 @@ void TCPConnection::segment_sends(bool send_syn) {
 void TCPConnection::unclean_shutdown(bool send_rst) {
     _receiver.stream_out().set_error();
     _sender.stream_in().set_error();
+    _linger_after_streams_finish = false;
     _active = false;
     if (send_rst) {
         _need_send_rst = true;
@@ -151,4 +152,8 @@ bool TCPConnection::clean_shutdown() {
         if (_linger_after_streams_finish == false || time_since_last_segment_received() >= 10 * _cfg.rt_timeout)
             _active = false;
     return !_active;
+}
+
+bool TCPConnection::in_syn_sent() {
+    return _sender.next_seqno_absolute() > 0 && _sender.bytes_in_flight() == _sender.next_seqno_absolute();
 }

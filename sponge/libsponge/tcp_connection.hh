@@ -20,6 +20,7 @@ class TCPConnection {
     bool _need_send_rst = false;
     void unclean_shutdown(bool send_rst);
     bool clean_shutdown();
+    bool in_syn_sent();
 
     void segment_sends(bool send_syn=false);
 

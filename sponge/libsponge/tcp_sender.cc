@@ -58,7 +58,6 @@ void TCPSender::fill_window() {
         _segments_out.push(seg);
         _segments_in_flight.push(seg);
     }
-
     if (_stream.eof() && _stream.buffer_empty() && _window_size && _fin == false) {
         if (_window_size + _receive_ack <= _next_seqno)
             return;
