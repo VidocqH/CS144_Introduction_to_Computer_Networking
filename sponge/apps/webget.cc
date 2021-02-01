@@ -1,4 +1,6 @@
 #include "socket.hh"
+// My own tcp implementation
+#include "tcp_sponge_socket.hh"
 #include "util.hh"
 
 #include <cstdlib>
@@ -9,7 +11,8 @@ using namespace std;
 void get_URL(const string &host, const string &path) {
     // Your code here.
     const Address webserver(host, "http");
-    TCPSocket sock;
+    // TCPSocket sock;
+    CS144TCPSocket sock;
     sock.connect(webserver);
     sock.write("GET " + path + " HTTP/1.1\r\n");
     sock.write("Host: " + host + "\r\n");
@@ -35,6 +38,7 @@ void get_URL(const string &host, const string &path) {
     cout << res.substr(56) << endl;
     sock.close();
 
+    sock.wait_until_closed();  // Own implementation needed only
     // You will need to connect to the "http" service on
     // the computer whose name is in the "host" string,
     // then request the URL path given in the "path" string.

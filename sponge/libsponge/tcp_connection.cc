@@ -124,13 +124,13 @@ void TCPConnection::segment_sends(bool send_syn) {
 }
 
 void TCPConnection::unclean_shutdown(bool send_rst) {
-    _receiver.stream_out().set_error();    // Set Receiver to error state
-    _sender.stream_in().set_error();       // Set Sender to error state
-    _linger_after_streams_finish = false;  // close
-    _active = false;                       // close
-    if (send_rst) {                        // We are the active rst
-        _need_send_rst = true;             // Set sign
-        if (_sender.segments_out().empty())
+    _receiver.stream_out().set_error();      // Set Receiver to error state
+    _sender.stream_in().set_error();         // Set Sender to error state
+    _linger_after_streams_finish = false;    // close
+    _active = false;                         // close
+    if (send_rst) {                          // We are the active rst
+        _need_send_rst = true;               // Set sign
+        if (_sender.segments_out().empty())  // Nothing to send
             _sender.send_empty_segment();
         segment_sends();
     }

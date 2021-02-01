@@ -13,7 +13,6 @@
 class ByteStream {
   private:
     // Your code here -- add private members as necessary.
-    std::string Data = "";
     size_t _capacity = 0;
     size_t _written = 0;
     size_t _readden = 0;

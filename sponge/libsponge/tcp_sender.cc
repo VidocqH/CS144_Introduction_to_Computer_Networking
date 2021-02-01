@@ -98,6 +98,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         _consecutive_retrans++;
         _clock_is_counting = true;
         _clock = 0;
+        // When win_size=0, retrans_timeout doesn't multiply by 2
         if (_window_is_zero == false)
             _retrans_timeout *= 2;
     }

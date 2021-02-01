@@ -18,6 +18,16 @@ Solutions for Stanford-CS144-Fall2020
     2. sponge/libsponge/wrapping_integers.hh
     3. sponge/libsponge/tcp_receiver.cc
     4. sponge/libsponge/tcp_receiver.hh
+    5. Bug fixed:
+        - Lab 1: sponge/libsponge/stream_reassembler.cc & stream_reassembler.hh
 + **Lab 3: the TCP sender**
     1. sponge/libsponge/tcp_sender.cc
     2. sponge/libsponge/tcp_sender.hh
++ **Lab 4: the TCP connection**
+    1. sponge/libsponge/tcp_connection.cc
+    2. sponge/libsponge/tcp_sender.hh
+    3. Bug fixed:
+        - Lab 0: sponge/apps/webget.cc
+        - Lab 0: sponge/libsponge/byte_stream.cc & byte_stream.hh
+        - Lab 2: sponge/libsponge/tcp_receiver.cc & tcp_receiver.hh
+        - Lab 3: sponge/libsponge/tcp_sender.cc & tcp_sender.hh
