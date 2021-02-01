@@ -30,46 +30,28 @@ void TCPSender::fill_window() {
     // Send syn before any other segments
     if (_syn == false) {
         TCPSegment seg;
-        seg.header().seqno = wrap(_next_seqno, _isn);
         seg.header().syn = true;
-        _seqno = _next_seqno;
-        _next_seqno += 1ull;       // Expected ackno
-        _bytes_in_flight += 1ull;  // Bytes are flighting
-        _segments_out.push(seg);
-        _segments_in_flight.push(seg);
+        send_segment(seg);
         _syn = true;
         return;
     }
-
-    while (_window_size && _stream.buffer_size() && _fin == false) {
-        size_t len = _window_size < _stream.buffer_size() ? _window_size : _stream.buffer_size();
-        len = len < TCPConfig::MAX_PAYLOAD_SIZE ? len : TCPConfig::MAX_PAYLOAD_SIZE;
-        string data = _stream.read(len);
-        _window_size -= data.length();
+    _window_is_zero = _window_size == 0;
+    const size_t win = _window_size > 0 ? _window_size : 1;  // See win_size as 1 when it's 0, special case
+    size_t remain;                                           // Remaining win_size
+    while ((remain = win - (_next_seqno - _receive_ack)) != 0 && _fin == false) {
+        size_t len = min(remain, TCPConfig::MAX_PAYLOAD_SIZE);
         TCPSegment seg;
-        seg.header().seqno = wrap(_next_seqno, _isn);
+        string data = _stream.read(len);
         seg.payload() = Buffer(move(data));
-        if (_stream.eof() && _stream.buffer_empty() && _window_size) {
+        // EOF, and win_size enough, send fin
+        if (_stream.eof() && seg.length_in_sequence_space() < win) {
             seg.header().fin = true;
             _fin = true;
         }
-        _next_seqno += seg.length_in_sequence_space();
-        _bytes_in_flight += seg.length_in_sequence_space();
-        _segments_out.push(seg);
-        _segments_in_flight.push(seg);
-    }
-    if (_stream.eof() && _stream.buffer_empty() && _window_size && _fin == false) {
-        if (_window_size + _receive_ack <= _next_seqno)
+        // seg empty
+        if (seg.length_in_sequence_space() == 0)
             return;
-        TCPSegment seg;
-        seg.header().seqno = wrap(_next_seqno, _isn);
-        seg.header().fin = true;
-        _next_seqno += 1ull;
-        _bytes_in_flight += 1ull;
-        _segments_out.push(seg);
-        _segments_in_flight.push(seg);
-        _fin = true;
-        return;
+        send_segment(seg);
     }
 }
 
@@ -82,48 +64,45 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     // ----------------------------------------------------------------------
     // If ackno > next_seqno, outbound, discard
     // If ackno <= _receive_ack, already received, sync window size and discard it
-    size_t abs_ackno = unwrap(ackno, _isn, _checkpoint);
-    if (abs_ackno > _next_seqno)  // Outbounded ackno
+    const size_t abs_ackno = unwrap(ackno, _isn, _checkpoint);
+    if (abs_ackno > _next_seqno)  // Outbounded ackno, those segs did not send.
         return;
-    if (abs_ackno <= _receive_ack) {
-        _window_size = window_size;  // Only sync window size
+    _window_size = window_size;     // Sync window size
+    if (abs_ackno <= _receive_ack)  // Ackno has been acked
         return;
-    }
-    if (_fin && (abs_ackno == _next_seqno)) {  // The last ack, client has received fin segment
-        _window_size = _bytes_in_flight = 0;
-        while (_segments_in_flight.size())
+    _receive_ack = abs_ackno;  // Sync receive_ack
+    _checkpoint = abs_ackno;   // Set checkpoint
+
+    while (_segments_in_flight.size()) {
+        TCPSegment seg = _segments_in_flight.front();
+        if (unwrap(seg.header().seqno, _isn, _next_seqno) + seg.length_in_sequence_space() <= abs_ackno) {
+            _bytes_in_flight -= seg.length_in_sequence_space();
             _segments_in_flight.pop();
-        return;
+        } else
+            break;
     }
-    _window_size = window_size == 0 ? 1 : window_size;   // Sync window size
-    _window_is_zero = window_size == 0 ? true : false;   // Reset win sign
-    _clock = 0;                                          // Reset clock
-    _checkpoint = abs_ackno;                             // Sync checkpoint
-    _receive_ack = abs_ackno;                            // Sync receive_ack
-    _bytes_in_flight -= (abs_ackno - _seqno);            // Sync bytes_in_flight
-    _seqno = abs_ackno;                                  // Sync seqno
+    fill_window();
     _retrans_timeout = _initial_retransmission_timeout;  // Reset timeout clock
     _consecutive_retrans = 0;                            // Reset consecutive_retransmissions
-    while (_segments_in_flight.size() &&
-        _segments_in_flight.front().header().seqno.raw_value() +
-        _segments_in_flight.front().length_in_sequence_space() <=
-        ackno.raw_value())
-        _segments_in_flight.pop();  // Sync segment_in_flight
-    fill_window();
+    if (_segments_in_flight.size()) {
+        _clock_is_counting = true;
+        _clock = 0;
+    }
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void TCPSender::tick(const size_t ms_since_last_tick) {
-    if (_segments_in_flight.size())
-        _clock += ms_since_last_tick;
+    _clock += ms_since_last_tick;
     if (_clock >= _retrans_timeout && _segments_in_flight.size()) {
         _segments_out.push(_segments_in_flight.front());
         _consecutive_retrans++;
+        _clock_is_counting = true;
         _clock = 0;
-        if (_window_is_zero)
-            return;
-        _retrans_timeout *= 2;
+        if (_window_is_zero == false)
+            _retrans_timeout *= 2;
     }
+    if (_segments_in_flight.empty())
+        _clock_is_counting = false;
 }
 
 unsigned int TCPSender::consecutive_retransmissions() const { return _consecutive_retrans; }
@@ -132,4 +111,16 @@ void TCPSender::send_empty_segment() {
     TCPSegment seg;
     seg.header().seqno = wrap(_next_seqno, _isn);
     _segments_out.push(seg);
+}
+
+void TCPSender::send_segment(TCPSegment seg) {
+    seg.header().seqno = wrap(_next_seqno, _isn);        // Set seqno
+    _next_seqno += seg.length_in_sequence_space();       // Update seqno
+    _bytes_in_flight += seg.length_in_sequence_space();  // Update in flight
+    _segments_in_flight.push(seg);                       // Backup seg
+    _segments_out.push(seg);                             // Send segment
+    if (_clock_is_counting == false) {
+        _clock_is_counting = true;  // Start clock
+        _clock = 0;                 // Reset clock
+    }
 }

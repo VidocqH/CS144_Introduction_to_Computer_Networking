@@ -20,8 +20,8 @@ class TCPSender {
     bool _syn = false;
     bool _fin = false;
     bool _window_is_zero = false;
+    bool _clock_is_counting = false;
     uint64_t _bytes_in_flight = 0;
-    uint64_t _seqno = 0;  // Record the last ack number to compute bytes in flight
     uint16_t _window_size = 0;
     uint64_t _checkpoint = 0;
     size_t _clock = 0;
@@ -29,6 +29,7 @@ class TCPSender {
     uint _consecutive_retrans = 0;
     uint _retrans_timeout = 0;
     uint64_t _receive_ack = 0;
+    void send_segment(TCPSegment seg);
 
     //! our initial sequence number, the number for our SYN.
     WrappingInt32 _isn;

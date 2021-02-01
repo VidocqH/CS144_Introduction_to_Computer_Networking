@@ -23,43 +23,38 @@ size_t TCPConnection::time_since_last_segment_received() const { return _time_si
 void TCPConnection::segment_received(const TCPSegment &seg) {
     if (_active == false)
         return;
-    TCPState state = TCPState(_sender, _receiver, _active, _linger_after_streams_finish);
-    _time_since_last_segment_received = 0;
-    TCPHeader header = seg.header();
+    _time_since_last_segment_received = 0;  // Reset clock
+    const TCPHeader header = seg.header();
 
-    if (in_syn_sent() && header.ack && seg.payload().size())
+    auto sender_state = TCPState::state_summary(_sender);
+    // SYN_SENT state should not receive seg that have payload
+    if (sender_state == TCPSenderStateSummary::SYN_SENT && header.ack && seg.payload().size())
         return;
 
-    bool send_empty = false;
+    // Not in CLOSED state, accpted ack
     if (header.ack && _sender.next_seqno_absolute() > 0)
         _sender.ack_received(seg.header().ackno, seg.header().win);
-        //TODO: if ack received failed, send empty
 
-    _receiver.segment_received(seg);
-    //TODO: if segment reiceved failed, send empty
-
-    if (header.fin && state == TCPState::State::ESTABLISHED)
-        _is_passive_close = true; // passive close, forhibit clock during close-wait
+    _receiver.segment_received(seg);  // Receive seg
 
     if (header.syn && _sender.next_seqno_absolute() == 0) {
-        connect(); // Syn
+        connect();  // Send syn
         return;
     }
 
     if (header.rst) {
-        if (in_syn_sent() && header.ack == false)
+        // rst with SYN_SENT state requires the ack to be true (the only requrie)
+        sender_state = TCPState::state_summary(_sender);
+        if (sender_state == TCPSenderStateSummary::SYN_SENT && header.ack == false)
             return;
-        unclean_shutdown(false); // Passive rst
+        unclean_shutdown(false);  // Passive rst
         return;
     }
 
-    if (seg.length_in_sequence_space() > 0)
-        send_empty = true;
-
-    // send empty segment
-    if (send_empty && _receiver.ackno().has_value() && _sender.segments_out().empty())
+    // Send empty segment
+    if (seg.length_in_sequence_space() > 0 && _receiver.ackno().has_value() && _sender.segments_out().empty())
         _sender.send_empty_segment();
-    
+
     segment_sends();
 }
 
@@ -73,13 +68,13 @@ size_t TCPConnection::write(const string &data) {
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
-    if (_active == false) // Active return none
+    if (_active == false)  // Active return none
         return;
     auto state = TCPState(_sender, _receiver, _active, _linger_after_streams_finish);
-    _time_since_last_segment_received += ms_since_last_tick; // Syn Clock
-    _sender.tick(ms_since_last_tick); // Sender Clock
+    _time_since_last_segment_received += ms_since_last_tick;  // Syn Clock
+    _sender.tick(ms_since_last_tick);                         // Sender Clock
     if (_sender.consecutive_retransmissions() > _cfg.MAX_RETX_ATTEMPTS)
-        unclean_shutdown(true); // set and send rst
+        unclean_shutdown(true);  // Set and send rst
     segment_sends();
 }
 
@@ -90,7 +85,7 @@ void TCPConnection::end_input_stream() {
 }
 
 void TCPConnection::connect() {
-    segment_sends(true); // send syn
+    segment_sends(true);  // send syn
 }
 
 TCPConnection::~TCPConnection() {
@@ -99,7 +94,7 @@ TCPConnection::~TCPConnection() {
             cerr << "Warning: Unclean shutdown of TCPConnection\n";
 
             // Your code here: need to send a RST segment to the peer
-            unclean_shutdown(true); // send rst seg
+            unclean_shutdown(true);  // Active rst sender
         }
     } catch (const exception &e) {
         std::cerr << "Exception destructing TCP FSM: " << e.what() << std::endl;
@@ -107,38 +102,34 @@ TCPConnection::~TCPConnection() {
 }
 
 void TCPConnection::segment_sends(bool send_syn) {
-    auto state = TCPState(_sender, _receiver, _active, _linger_after_streams_finish);
     if (send_syn == false && _syn_sended == false)
-        return;
+        return;  // We are in LISTEN state
     else
         _syn_sended = true;
     _sender.fill_window();
     while (_sender.segments_out().size()) {
         TCPSegment seg;
-        // if (state == TCPState::State::LAST_ACK && _time_since_last_segment_received < _cfg.rt_timeout)
-            // break;
-        // cout<<state.name()<<"--"<<_sender.segments_out().size()<<endl;
         seg = _sender.segments_out().front();
         _sender.segments_out().pop();
         if (_receiver.ackno().has_value()) {
-            seg.header().ack = true; // ACK have set
+            seg.header().ack = true;  // ACK have been set
             seg.header().ackno = _receiver.ackno().value();
             seg.header().win = _receiver.window_size();
         }
         if (_need_send_rst)
-            seg.header().rst = true;
+            seg.header().rst = true;  // RST segment
         _segments_out.push(seg);
     }
     clean_shutdown();
 }
 
 void TCPConnection::unclean_shutdown(bool send_rst) {
-    _receiver.stream_out().set_error();
-    _sender.stream_in().set_error();
-    _linger_after_streams_finish = false;
-    _active = false;
-    if (send_rst) {
-        _need_send_rst = true;
+    _receiver.stream_out().set_error();    // Set Receiver to error state
+    _sender.stream_in().set_error();       // Set Sender to error state
+    _linger_after_streams_finish = false;  // close
+    _active = false;                       // close
+    if (send_rst) {                        // We are the active rst
+        _need_send_rst = true;             // Set sign
         if (_sender.segments_out().empty())
             _sender.send_empty_segment();
         segment_sends();
@@ -147,13 +138,10 @@ void TCPConnection::unclean_shutdown(bool send_rst) {
 
 bool TCPConnection::clean_shutdown() {
     if (_receiver.stream_out().input_ended() && _sender.stream_in().eof() == false)
-        _linger_after_streams_finish = false;
+        _linger_after_streams_finish = false;  // Enter CLOSE_WAIT state
     if (_receiver.stream_out().input_ended() && _sender.stream_in().eof() && _sender.bytes_in_flight() == 0)
+        // We are in TIME_WAIT state
         if (_linger_after_streams_finish == false || time_since_last_segment_received() >= 10 * _cfg.rt_timeout)
-            _active = false;
+            _active = false;  // Timeout, Enter CLOSED state
     return !_active;
-}
-
-bool TCPConnection::in_syn_sent() {
-    return _sender.next_seqno_absolute() > 0 && _sender.bytes_in_flight() == _sender.next_seqno_absolute();
 }

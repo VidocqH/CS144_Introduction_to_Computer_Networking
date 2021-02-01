@@ -48,7 +48,7 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
             _ackno = _ackno + 1ull;  // fin sign occupy one bit, ack+1
             _fin_not_count = false;
         }
-        _reassembler.stream_out().end_input();              // End input
+        _reassembler.stream_out().end_input();  // End input
     }
 }
 
