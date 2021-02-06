@@ -47,7 +47,7 @@ void Router::route_one_datagram(InternetDatagram &dgram) {
         if (_routes[idx]._next_hop.has_value())
             interface(_routes[idx]._interface_num).send_datagram(dgram, _routes[idx]._next_hop->ip());
         else
-            interface(_routes[idx]._interface_num).send_datagram(dgram, Address::from_ipv4_numeric(dgram_dst));
+            interface(_routes[idx]._interface_num).send_datagram(dgram, Address::from_ipv4_numeric(dgram.header().dst));
     }
 }
 
