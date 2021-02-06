@@ -44,13 +44,13 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
         ARPMessage msg;
         msg.sender_ethernet_address = _ethernet_address;
         msg.sender_ip_address = _ip_address.ipv4_numeric();
-        msg.target_ethernet_address = EthernetAddress{0}; // ARP msg addr = 0
+        msg.target_ethernet_address = EthernetAddress{0};  // ARP msg addr = 0
         msg.target_ip_address = next_hop_ip;
         msg.opcode = ARPMessage::OPCODE_REQUEST;
         frame.payload() = msg.serialize();
         frame.header().type = EthernetHeader::TYPE_ARP;
         frame.header().src = _ethernet_address;
-        frame.header().dst = EthernetAddress{ETHERNET_BROADCAST}; // BROADCAST ip: ff:ff:ff:ff:ff:ff
+        frame.header().dst = EthernetAddress{ETHERNET_BROADCAST};  // BROADCAST ip: ff:ff:ff:ff:ff:ff
         _dgram_stage.push_back(make_pair(next_hop, dgram));
         _map_status[next_hop_ip] = -1;
     } else if (_map_status.count(next_hop_ip) && _map_status[next_hop_ip] < 0) {
@@ -102,7 +102,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
 void NetworkInterface::tick(const size_t ms_since_last_tick) {
     for (auto i : _map_status) {
-        if (_map_status.empty()) // Outbound check
+        if (_map_status.empty())  // Outbound check
             break;
         if (_map_status[i.first] >= 0) {
             // CLOCK>=0, Check if there are any expired mappings
@@ -115,7 +115,7 @@ void NetworkInterface::tick(const size_t ms_since_last_tick) {
             // CLOCK<0, Check if there are any expired ARP requests
             _map_status[i.first] -= ms_since_last_tick;
             if (_map_status[i.first] <= -5001)
-                _map_status.erase(i.first); 
+                _map_status.erase(i.first);
         }
     }
     send_stage_datagram();

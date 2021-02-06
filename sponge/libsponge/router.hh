@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <queue>
+#include <vector>
 
 //! \brief A wrapper for NetworkInterface that makes the host-side
 //! interface asynchronous: instead of returning received datagrams
@@ -48,6 +49,14 @@ class Router {
     //! as specified by the route with the longest prefix_length that matches the
     //! datagram's destination address.
     void route_one_datagram(InternetDatagram &dgram);
+    struct RouteElem {
+        uint32_t _route_prefix = 0;
+        uint8_t _prefix_length = 0;
+        std::optional<Address> _next_hop = std::nullopt;
+        size_t _interface_num = 0;
+    };
+    std::vector<RouteElem> _routes{};
+    int find_longest_prefix(uint32_t dst);
 
   public:
     //! Add an interface to the router

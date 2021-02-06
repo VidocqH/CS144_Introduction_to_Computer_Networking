@@ -29,14 +29,26 @@ void Router::add_route(const uint32_t route_prefix,
     cerr << "DEBUG: adding route " << Address::from_ipv4_numeric(route_prefix).ip() << "/" << int(prefix_length)
          << " => " << (next_hop.has_value() ? next_hop->ip() : "(direct)") << " on interface " << interface_num << "\n";
 
-    DUMMY_CODE(route_prefix, prefix_length, next_hop, interface_num);
     // Your code here.
+    RouteElem route;
+    route._route_prefix = route_prefix;
+    route._prefix_length = prefix_length;
+    route._next_hop = next_hop;
+    route._interface_num = interface_num;
+    _routes.push_back(route);
 }
 
 //! \param[in] dgram The datagram to be routed
 void Router::route_one_datagram(InternetDatagram &dgram) {
-    DUMMY_CODE(dgram);
     // Your code here.
+    const auto idx = find_longest_prefix(dgram.header().dst);
+    if (dgram.header().ttl > 1 && idx > -1) {
+        dgram.header().ttl--;
+        if (_routes[idx]._next_hop.has_value())
+            interface(_routes[idx]._interface_num).send_datagram(dgram, _routes[idx]._next_hop->ip());
+        else
+            interface(_routes[idx]._interface_num).send_datagram(dgram, Address::from_ipv4_numeric(dgram_dst));
+    }
 }
 
 void Router::route() {
@@ -48,4 +60,23 @@ void Router::route() {
             queue.pop();
         }
     }
+}
+
+//! Return the index of route position in router's table
+//! \param[in] dst the destionation ip address
+int Router::find_longest_prefix(const uint32_t dst) {
+    int longest = -1;
+    int idx = -1;
+    int count = 0;
+    for (auto route : _routes) {
+        const uint32_t mask = route._prefix_length == 0 ? 0 : (0xffffffff << (32 - route._prefix_length));
+        if ((mask & dst) == (mask & route._route_prefix)) {
+            if (longest < route._prefix_length) {
+                idx = count;
+                longest = route._prefix_length;
+            }
+        }
+        count++;
+    }
+    return idx;
 }

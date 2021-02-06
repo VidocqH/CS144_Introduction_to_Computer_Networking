@@ -34,3 +34,6 @@ Solutions for Stanford-CS144-Fall2020
 + **Lab 5: the network interface**
     1. sponge/libsponge/network_interface.cc
     2. sponge/libsponge/network_interface.hh
++ **Lab 6: the IP router**
+    1. sponge/libsponge/router.cc
+    2. sponge/libsponge/router.hh
