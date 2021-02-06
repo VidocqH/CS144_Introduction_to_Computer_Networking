@@ -162,9 +162,13 @@ int main() {
                            make_arp(ARPMessage::OPCODE_REQUEST, local_eth, "1.2.3.4", {}, "10.0.0.1").serialize())});
             test.execute(ExpectNoFrame{});
             test.execute(Tick{4990});
+            cout<<"-------0---------"<<endl;
             test.execute(SendDatagram{make_datagram("17.17.17.17", "18.18.18.18"), Address("10.0.0.1", 0)});
+            cout<<"-------1---------"<<endl;
             test.execute(ExpectNoFrame{});
+            cout<<"-------2---------"<<endl;
             test.execute(Tick{20});
+            cout<<"-------3---------"<<endl;
             // pending mapping should now expire
             test.execute(SendDatagram{make_datagram("42.41.40.39", "13.12.11.10"), Address("10.0.0.1", 0)});
             test.execute(ExpectFrame{

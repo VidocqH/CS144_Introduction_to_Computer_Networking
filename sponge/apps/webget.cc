@@ -12,7 +12,8 @@ void get_URL(const string &host, const string &path) {
     // Your code here.
     const Address webserver(host, "http");
     // TCPSocket sock;
-    CS144TCPSocket sock;
+    // CS144TCPSocket sock; // Lab 4 Implementation
+    FullStackSocket sock;
     sock.connect(webserver);
     sock.write("GET " + path + " HTTP/1.1\r\n");
     sock.write("Host: " + host + "\r\n");

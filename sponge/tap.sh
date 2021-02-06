@@ -7,7 +7,8 @@ show_usage () {
 
 start_tap () {
     local TAPNUM="$1" TAPDEV="tap$1" LLADDR="02:B0:1D:FA:CE:"`printf "%02x" $1`
-    ip tuntap add mode tap user "${SUDO_USER}" name "${TAPDEV}"
+    # ip tuntap add mode tap user "${SUDO_USER}" name "${TAPDEV}"
+    ip tuntap add mode tap user root name "${TAPDEV}"
     ip link set "${TAPDEV}" address "${LLADDR}"
 
     ip addr add "${TUN_IP_PREFIX}.${TAPNUM}.1/24" dev "${TAPDEV}"
@@ -104,7 +105,7 @@ if [ "$MODE" = "check" ]; then
 fi
 
 # sudo if necessary
-check_sudo "$@"
+# check_sudo "$@"
 
 # get configuration
 . "$(dirname "$0")"/etc/tunconfig
