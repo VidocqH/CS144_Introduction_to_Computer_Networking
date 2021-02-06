@@ -1,4 +1,4 @@
-Lab 5 Writeup
+Lab 6 Writeup
 =============
 
 My name: Vidocq
@@ -7,7 +7,7 @@ My SUNet ID: [your sunetid here]
 
 This lab took me about [n] hours to do. I [did/did not] attend the lab session.
 
-Program Structure and Design of the NetworkInterface:
+Program Structure and Design of the Router:
 []
 
 Implementation Challenges:
