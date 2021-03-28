@@ -5,6 +5,15 @@ Solutions for Stanford-CS144-Fall2020
 
 [Course Github](https://github.com/cs144/sponge)
 
+## Docker image Usage
+```
+docker pull vidocqh/cs144:latest
+```
+1. You can use `-v` flag for mounting the `sponge` directory.
+2. You need to edit `tun.sh` and `tap.sh` for avoiding `root` user checking. (Since `Lab 4`)
+    + [tun.sh](https://github.com/VidocqH/CS144_Introduction_to_Computer_Networking/blob/main/sponge/tun.sh)
+    + [tap.sh](https://github.com/VidocqH/CS144_Introduction_to_Computer_Networking/blob/main/sponge/tap.sh)
+
 ## Finished
 + **Lab 0: Networking Warmup**
     1. sponge/apps/webget.cc
