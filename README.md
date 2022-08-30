@@ -6,8 +6,9 @@ Solutions for Stanford-CS144-Fall2020
 [Course Github](https://github.com/cs144/sponge)
 
 ## Docker image Usage
-```
+```bash
 docker pull vidocqh/cs144:latest
+docker run -td --privileged --name cs144_container vidocqh/cs144
 ```
 1. You can use `-v` flag for mounting the `sponge` directory.
 2. You need to edit `tun.sh` and `tap.sh` for avoiding `root` user checking. (Since `Lab 4`)
